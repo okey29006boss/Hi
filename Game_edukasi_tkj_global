@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Edu-TKJ — Belajar & Kuis</title>
+<style>
+  :root{
+    --bg:#f7fbff; --card:#ffffff; --muted:#6b7280; --primary:#2f6fe6; --accent:#6c4ef6;
+    --success:#16a34a; --danger:#ef4444; --radius:12px;
+  }
+  *{box-sizing:border-box;font-family:Inter, "Segoe UI", Roboto, system-ui, -apple-system;}
+  body{margin:0;background:linear-gradient(180deg,var(--bg),#ffffff);color:#07213a;min-height:100vh}
+  .app-wrap{max-width:1100px;margin:0 auto;padding:0 18px 60px}
+  /* Header */
+  header.app-header{display:flex;justify-content:space-between;align-items:center;padding:18px;margin:18px 0;border-radius:12px;background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff; box-shadow:0 12px 40px rgba(10,24,48,0.09)}
+  header h1{margin:0;font-size:1.15rem}
+  .profile-area{display:flex;gap:12px;align-items:center}
+  .profile-chip{background:rgba(255,255,255,0.95);color:var(--primary);padding:8px 12px;border-radius:999px;font-weight:800;cursor:pointer}
+  /* Tabs */
+  .nav-tabs{display:flex;gap:8px;margin:12px 0}
+  .tab-btn{background:var(--card);border:1px solid rgba(7,33,58,0.06);padding:10px 14px;border-radius:999px;cursor:pointer;font-weight:700}
+  .tab-btn.active{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 8px 24px rgba(47,111,230,0.12)}
+  /* Sections */
+  .content-section{display:none;background:var(--card);padding:18px;border-radius:12px;box-shadow:0 10px 30px rgba(10,24,48,0.04)}
+  .content-section.active{display:block}
+  /* Level selector */
+  .level-selector{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap}
+  .level-btn{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(7,33,58,0.06);font-weight:900;cursor:pointer;background:linear-gradient(180deg,#fff,#f6fbff)}
+  .level-btn.current{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;box-shadow:0 8px 30px rgba(47,111,230,0.12)}
+  /* Materials */
+  .material-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .material-btn{padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#f7fbff,#fff);border:1px solid rgba(7,33,58,0.04);cursor:pointer;font-weight:700}
+  .material-btn.premium{border-style:dashed;border-color:#ffd7d7;background:linear-gradient(180deg,#fff7f7,#fff)}
+  .material-detail{margin-top:12px;padding:14px;background:#fff;border-radius:10px;border:1px solid rgba(7,33,58,0.03)}
+  /* Quiz */
+  .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 8px 28px rgba(10,24,48,0.04)}
+  .question{font-weight:800;margin-top:8px}
+  .options{display:grid;gap:10px;margin-top:10px}
+  .option{padding:10px;border-radius:10px;border:1px solid rgba(7,33,58,0.06);cursor:pointer;background:#fbfdff}
+  .option.selected{background:#e7f4ff;border-color:var(--primary);color:var(--primary)}
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+  .small{font-size:0.9rem;color:var(--muted)}
+  .btn{background:linear-gradient(90deg,var(--primary),var(--accent));color:#fff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:800}
+  .btn.secondary{background:transparent;color:var(--primary);border:1px solid rgba(7,33,58,0.06)}
+  /* Login fullscreen */
+  .login-screen{position:fixed;inset:0;background:linear-gradient(180deg,var(--bg),#ffffff);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+  .login-card{display:flex;max-width:1000px;width:100%;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(10,24,48,0.12)}
+  .login-left{flex:1;padding:36px 32px}
+  .login-right{width:420px;background:linear-gradient(180deg,#f3f8ff,#eef6ff);display:flex;align-items:center;justify-content:center;padding:28px}
+  .illustr{max-width:320px;opacity:0.95}
+  .form-row{margin:12px 0}
+  input[type="text"]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(7,33,58,0.06)}
+  .login-actions{display:flex;gap:12px;margin-top:12px}
+  /* modal/panel */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.35);display:none;align-items:center;justify-content:center;z-index:10000}
+  .modal{background:#fff;padding:18px;border-radius:12px;max-width:520px;width:92%;box-shadow:0 20px 60px rgba(10,24,48,0.12)}
+  .purchase-row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  @media(max-width:820px){ .login-right{display:none} .login-card{flex-direction:column} .login-left{padding:24px} .login-card{max-width:520px} .login-right{width:100%} }
+</style>
+</head>
+<body>
+  <!-- Login screen (full screen) -->
+  <div id="loginScreen" class="login-screen" aria-hidden="true">
+    <div class="login-card" role="dialog" aria-label="Login">
+      <div class="login-left">
+        <h2 style="margin:0;color:var(--primary)">Selamat datang di Edu-TKJ</h2>
+        <p class="small" style="margin-top:6px">Masukkan nama & kelas untuk memulai. Simpan akun agar otomatis login pada kunjungan berikutnya.</p>
+
+        <div class="form-row">
+          <label for="nameInput" class="small">Nama</label>
+          <input id="nameInput" type="text" placeholder="Contoh: Budi Santoso" />
+        </div>
+        <div class="form-row">
+          <label for="classInput" class="small">Kelas</label>
+          <input id="classInput" type="text" placeholder="Contoh: X TKJ 1" />
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input id="saveAccount" type="checkbox"/><label class="small">Simpan akun di perangkat ini</label>
+        </div>
+
+        <div class="login-actions">
+          <button id="btnLogin" class="btn">Masuk</button>
+          <button id="btnGuest" class="btn secondary">Masuk sebagai Tamu</button>
+          <button id="btnLoadSaved" class="btn secondary">Muat Akun Tersimpan</button>
+        </div>
+      </div>
+
+      <div class="login-right" aria-hidden="true">
+        <!-- simple illustrative SVG -->
+        <svg class="illustr" viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="22" rx="6" ry="6" width="188" height="96" fill="#ffffff" stroke="#cfe3ff" stroke-width="2"/>
+          <g transform="translate(12,30)">
+            <circle cx="18" cy="18" r="10" fill="#cfe3ff"/>
+            <rect x="40" y="6" rx="4" ry="4" width="120" height="14" fill="#cfe3ff"></rect>
+            <rect x="40" y="28" rx="4" ry="4" width="120" height="40" fill="#eaf4ff"></rect>
+            <rect x="8" y="70" rx="4" ry="4" width="164" height="12" fill="#dfeefe"></rect>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal/panel for upgrade -->
+  <div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-label="Upgrade Premium">
+      <h3 style="margin:0 0 8px 0;color:var(--primary)">Upgrade ke Premium</h3>
+      <p class="small" style="margin-top:0">Pilih paket premium (simulasi). Setelah pembayaran (simulasi) paket aktif 30 hari.</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+        <div class="card purchase-row">
+          <div>
+            <strong>Premium Hard</strong><br><small class="small">Rp 20.000 / 30 hari — 25 soal per level & materi premium</small>
+          </div>
+          <div>
+            <button class="btn" id="buyHardBtn">Beli / Perpanjang</button>
+          </div>
+        </div>
+
+        <div class="card purchase-row">
+          <div>
+            <strong>Premium Extreme</strong><br><small class="small">Rp 45.000 / 30 hari — 50 soal per level & semua materi premium</small>
+          </div>
+          <div>
+            <button class="btn" id="buyExtremeBtn">Beli / Perpanjang</button>
+          </div>
+        </div>
+
+        <div style="text-align:right;margin-top:6px"><button id="closeModal" class="btn secondary">Tutup</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App header & main -->
+  <div class="app-wrap">
+    <header class="app-header">
+      <div>
+        <h1>Edu-TKJ</h1>
+        <div class="small" style="opacity:0.95">Materi & Kuis — Freemium</div>
+      </div>
+      <div class="profile-area" id="profileArea">
+        <!-- rendered by JS -->
+      </div>
+    </header>
+
+    <nav class="nav-tabs" role="tablist" aria-label="Navigasi utama">
+      <button class="tab-btn active" data-tab="materi">Materi</button>
+      <button class="tab-btn" data-tab="kuis">Kuis</button>
+      <button class="tab-btn" data-tab="about">Tentang</button>
+    </nav>
+
+    <!-- Materi -->
+    <section id="materi" class="content-section active" tabindex="0">
+      <h2>Materi Pembelajaran TKJ</h2>
+      <p class="small">Pilih kelas (10 / 11 / 12). Materi premium terbuka bila akun premium aktif.</p>
+
+      <div class="level-selector" id="materialLevelSelector" role="tablist">
+        <button class="level-btn current" data-level="1">10</button>
+        <button class="level-btn" data-level="2">11</button>
+        <button class="level-btn" data-level="3">12</button>
+      </div>
+
+      <div id="materialList" class="material-list"></div>
+      <div id="materialDetail" class="material-detail"><em>Pilih materi untuk melihat detail.</em></div>
+    </section>
+
+    <!-- Kuis -->
+    <section id="kuis" class="content-section" tabindex="0">
+      <h2>Kuis & Evaluasi</h2>
+      <p class="small">Jumlah soal disesuaikan dengan tier (Free/Hard/Extreme). Skor dihitung saat tekan Selesai.</p>
+      <div id="quizArea" class="card"><em>Memuat kuis...</em></div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="content-section" tabindex="0">
+      <h2>Tentang Aplikasi</h2>
+      <div class="card">
+        <p>Edu-TKJ: aplikasi pembelajaran materi dan kuis untuk siswa TKJ. Sistem freemium dengan paket Premium Hard & Extreme (simulasi).</p>
+      </div>
+    </section>
+  </div>
+
+<script>
+/* ============================
+   Single-file app JS
+   ============================ */
+
+/* selectors */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+/* storage helpers */
+const STORAGE_KEY = 'edu_tkj_user_v1';
+function saveUser(u){ localStorage.setItem(STORAGE_KEY, JSON.stringify(u)); }
+function loadUser(){ try{ const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : null; }catch(e){return null;} }
+function clearUser(){ localStorage.removeItem(STORAGE_KEY); }
+
+/* state */
+let currentUser = null;
+
+/* elements */
+const loginScreen = $('#loginScreen');
+const nameInput = $('#nameInput'), classInput = $('#classInput'), saveAccountChk = $('#saveAccount');
+const btnLogin = $('#btnLogin'), btnGuest = $('#btnGuest'), btnLoadSaved = $('#btnLoadSaved');
+const profileArea = $('#profileArea');
+const modalBackdrop = $('#modalBackdrop'), buyHardBtn = $('#buyHardBtn'), buyExtremeBtn = $('#buyExtremeBtn'), closeModal = $('#closeModal');
+
+const materialListEl = $('#materialList'), materialDetailEl = $('#materialDetail');
+const quizAreaEl = $('#quizArea');
+
+/* Tabs */
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', ()=> {
+    $$('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    $$('.content-section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+  });
+});
+
+/* ============================
+   MATERIALS (10 per level) + premium samples
+   ============================ */
+const materials = {
+  /* level1 */
+  'level1_01_pengantar': { level:1, title:'1. Pengenalan TKJ', content:`<h3>Pengenalan TKJ</h3><p>Teknik Komputer & Jaringan: ruang lingkup dan tujuan.</p>` },
+  'level1_02_komponen': { level:1, title:'2. Komponen Komputer', content:`<p>CPU, RAM, Storage, Motherboard, PSU, NIC.</p>` },
+  'level1_03_topologi': { level:1, title:'3. Topologi Jaringan', content:`<p>Star, Bus, Ring, Mesh.</p>` },
+  'level1_04_media': { level:1, title:'4. Media Transmisi', content:`<p>UTP, STP, Coaxial, Fiber Optic.</p>` },
+  'level1_05_ip': { level:1, title:'5. IP Address & Subnetting', content:`<p>Format IPv4, subnet mask, host usable.</p>` },
+  'level1_06_osi': { level:1, title:'6. Model OSI', content:`<p>7 layer OSI dan contoh protokol.</p>` },
+  'level1_07_perangkat': { level:1, title:'7. Perangkat Jaringan', content:`<p>Switch, Router, Access Point.</p>` },
+  'level1_08_mac': { level:1, title:'8. NIC & MAC Address', content:`<p>Format MAC dan pengecekan.</p>` },
+  'level1_09_keamanan': { level:1, title:'9. Dasar Keamanan', content:`<p>Password kuat, enkripsi Wi-Fi, update firmware.</p>` },
+  'level1_10_praktik': { level:1, title:'10. Praktik Dasar', content:`<p>Ping, traceroute, ipconfig / ip addr.</p>` },
+  /* level2 */
+  'level2_01_admin': { level:2, title:'1. Administrasi Jaringan', content:`<p>Monitoring, backup, manajemen user.</p>` },
+  'level2_02_dhcpdns': { level:2, title:'2. DHCP & DNS', content:`<p>DHCP: lease/scope; DNS: types record.</p>` },
+  'level2_03_vlan': { level:2, title:'3. VLAN & Trunking', content:`<p>802.1Q tagging, access vs trunk.</p>` },
+  'level2_04_routing': { level:2, title:'4. Routing Dasar', content:`<p>Static vs Dynamic routing.</p>` },
+  'level2_05_nat': { level:2, title:'5. NAT & Firewall', content:`<p>NAT, PAT, aturan firewall.</p>` },
+  'level2_06_monitor': { level:2, title:'6. Monitoring & Troubleshooting', content:`<p>Wireshark, tcpdump, SNMP.</p>` },
+  'level2_07_linux': { level:2, title:'7. Administrasi Linux', content:`<p>ip addr, ip route, systemctl.</p>` },
+  'level2_08_backup': { level:2, title:'8. Backup & Recovery', content:`<p>Full, incremental, differential.</p>` },
+  'level2_09_wireless': { level:2, title:'9. Wireless Planning', content:`<p>Survey, channel plan, WPA2/WPA3.</p>` },
+  'level2_10_praktikum': { level:2, title:'10. Praktikum Konfigurasi', content:`<p>VLAN, DHCP scope, routing.</p>` },
+  /* level3 */
+  'level3_01_design': { level:3, title:'1. Desain Infrastruktur', content:`<p>Capacity planning & redundancy.</p>` },
+  'level3_02_datacenter': { level:3, title:'2. Data Center Best Practice', content:`<p>Patch panel, airflow, UPS.</p>` },
+  'level3_03_virtual': { level:3, title:'3. Virtualisasi & Cloud', content:`<p>VM, containers, IaaS/PaaS/SaaS.</p>` },
+  'level3_04_loadbal': { level:3, title:'4. Load Balancing', content:`<p>Round-robin, health checks.</p>` },
+  'level3_05_idsips': { level:3, title:'5. IDS/IPS', content:`<p>Snort, Suricata, SIEM basics.</p>` },
+  'level3_06_routingadv': { level:3, title:'6. Advanced Routing', content:`<p>OSPF basics, BGP intro.</p>` },
+  'level3_07_servers': { level:3, title:'7. Server & Layanan', content:`<p>Web, DB, file server best practices.</p>` },
+  'level3_08_automation': { level:3, title:'8. Otomasi & Scripting', content:`<p>Ansible & Python basics.</p>` },
+  'level3_09_ethics': { level:3, title:'9. Etika Profesi', content:`<p>Privasi, izin akses.</p>` },
+  'level3_10_project': { level:3, title:'10. Proyek Akhir', content:`<p>Checklist & dokumentasi proyek.</p>` }
+};
+
+/* premium sample materials */
+const premiumHardMaterials = {
+  ph1:{level:1,title:'PH: Optimasi Wi-Fi',content:'<p>Advanced channel planning, MIMO.</p>'},
+  ph2:{level:2,title:'PH: Security Hardening',content:'<p>Firewall policy design, segmentation.</p>'},
+  ph3:{level:3,title:'PH: Data Center Optimization',content:'<p>Cooling & rack layout.</p>'}
+};
+const premiumExtremeMaterials = {
+  pe1:{level:1,title:'PE: Studi Kasus Network Design',content:'<p>End-to-end school LAN design.</p>'},
+  pe2:{level:2,title:'PE: Advanced Routing Lab',content:'<p>BGP/OSPF lab exercises.</p>'},
+  pe3:{level:3,title:'PE: SOC & Incident Response',content:'<p>SOC workflow & SIEM playbook.</p>'}
+};
+
+/* helpers to render materials by level */
+function getMaterialsByLevel(level){
+  return Object.keys(materials).filter(k=>materials[k].level===level).map(k=>({id:k,...materials[k]}));
+}
+function renderMaterialsListForLevel(level){
+  materialListEl.innerHTML = '';
+  const arr = getMaterialsByLevel(level);
+  arr.forEach(m=>{
+    const btn = document.createElement('button'); btn.className='material-btn'; btn.textContent = m.title;
+    btn.addEventListener('click', ()=> materialDetailEl.innerHTML = `<h3>${m.title}</h3>${m.content}`);
+    materialListEl.appendChild(btn);
+  });
+  // premium hard
+  if(currentUser && (currentUser.tier === 'hard' || currentUser.tier === 'extreme')){
+    Object.keys(premiumHardMaterials).forEach(k=>{
+      const pm = premiumHardMaterials[k];
+      if(pm.level === level){
+        const b = document.createElement('button'); b.className='material-btn premium';
+        b.innerHTML = pm.title + ' <small class="small">(Premium)</small>';
+        b.addEventListener('click', ()=> materialDetailEl.innerHTML = `<h3>${pm.title}</h3>${pm.content}`);
+        materialListEl.appendChild(b);
+      }
+    });
+  }
+  // premium extreme
+  if(currentUser && currentUser.tier === 'extreme'){
+    Object.keys(premiumExtremeMaterials).forEach(k=>{
+      const pm = premiumExtremeMaterials[k];
+      if(pm.level === level){
+        const b = document.createElement('button'); b.className='material-btn premium';
+        b.innerHTML = pm.title + ' <small class="small">(Premium Extreme)</small>';
+        b.addEventListener('click', ()=> materialDetailEl.innerHTML = `<h3>${pm.title}</h3>${pm.content}`);
+        materialListEl.appendChild(b);
+      }
+    });
+  }
+  const first = materialListEl.querySelector('.material-btn');
+  if(first) first.click();
+  else materialDetailEl.innerHTML = '<em>Tidak ada materi untuk level ini.</em>';
+}
+
+/* level selector binding */
+$$('#materialLevelSelector [data-level]').forEach(btn=>{
+  btn.addEventListener('click', ()=> {
+    $$('#materialLevelSelector [data-level]').forEach(x=>x.classList.remove('current'));
+    btn.classList.add('current');
+    renderMaterialsListForLevel(parseInt(btn.dataset.level,10));
+  });
+});
+
+/* ============================
+   QUIZ: Free / Hard / Extreme banks
+   ============================ */
+/* base free bank (10 per level) */
+const quizFree = {
+  1:[
+    {q:"Apa kepanjangan TKJ?", a:["Teknik Komputer dan Jaringan","Teknologi Komunikasi Jaringan","Teknik Komunikasi Jaringan"], c:0},
+    {q:"Perangkat hub untuk LAN:", a:["Switch","Modem","Printer"], c:0},
+    {q:"IP privat contoh:", a:["192.168.1.1","8.8.8.8","203.0.113.5"], c:0},
+    {q:"Perintah cek konektivitas:", a:["ping","edit","mkdir"], c:0},
+    {q:"Media transmisi jarak jauh:", a:["Fiber Optic","UTP Cat5e","Coaxial"], c:0},
+    {q:"Jumlah layer OSI:", a:["7","5","4"], c:0},
+    {q:"Layer MAC bekerja pada:", a:["Data Link","Network","Application"], c:0},
+    {q:"Fungsi DNS:", a:["Nama→IP","Backup data","Filter paket"], c:0},
+    {q:"Perintah untuk lihat IP di Linux:", a:["ip addr","ipconfig","ifconfig"], c:0},
+    {q:"Host usable /24:", a:["254","256","128"], c:0}
+  ],
+  2:[
+    {q:"Fungsi DHCP:", a:["Memberi IP otomatis","Menerjemahkan domain","Mengatur VLAN"], c:0},
+    {q:"Record email DNS:", a:["MX","A","CNAME"], c:0},
+    {q:"VLAN untuk:", a:["Pisahkan broadcast domain","Menaikkan bandwidth","Menambah user"], c:0},
+    {q:"Trunk membawa:", a:["Banyak VLAN","Satu VLAN","Tidak ada"], c:0},
+    {q:"NAT berguna untuk:", a:["IP privat→publik","Membackup data","Mengatur SSID"], c:0},
+    {q:"Tool capture:", a:["Wireshark","Photoshop","Notepad++"], c:0},
+    {q:"Perintah lihat route:", a:["ip route","ip link","ls"], c:0},
+    {q:"SNMP untuk:", a:["Monitoring","Editing","Design"], c:0},
+    {q:"Backup incremental:", a:["Hanya perubahan","Full backup","Hapus lama"], c:0},
+    {q:"Keamanan Wi-Fi:", a:["WPA2/WPA3","WEP","Open"], c:0}
+  ],
+  3:[
+    {q:"Load balancer fungsi:", a:["Distribusi trafik","Backup file","Manage VLAN"], c:0},
+    {q:"BGP untuk routing antar:", a:["AS","Subnet lokal","Switch"], c:0},
+    {q:"IDS berguna untuk:", a:["Deteksi serangan","Membersihkan cache","Mentranslate IP"], c:0},
+    {q:"Hypervisor untuk:", a:["Menjalankan VM","Mengecek kabel","Mengatur SSID"], c:0},
+    {q:"HA tujuan:", a:["Minimize downtime","Maximize downtime","Increase latency"], c:0},
+    {q:"Contoh SaaS:", a:["Google Drive","Router","Switch"], c:0},
+    {q:"Ansible untuk:", a:["Otomasi konfigurasi","Desain grafis","Editing"], c:0},
+    {q:"Patch panel berfungsi:", a:["Manajemen kabel","Routing","DHCP"], c:0},
+    {q:"Redundancy artinya:", a:["Cadangan sistem","Hapus data","Compress"], c:0},
+    {q:"Dokumentasi proyek sebaiknya:", a:["BOM & topologi","Hanya gambar","Hanya teks"], c:0}
+  ]
+};
+
+/* generator for Hard & Extreme */
+function cloneWithSuffix(baseArr, count, suffix){
+  const out=[]; let i=0;
+  while(out.length < count){
+    const src = baseArr[i % baseArr.length];
+    const k = Math.floor(i / baseArr.length) + 1;
+    out.push({ q: `${src.q} — ${suffix} #${k}`, a: src.a.slice(), c: src.c });
+    i++;
+  }
+  return out;
+}
+
+const quizBank = { free:{}, hard:{}, extreme:{} };
+[1,2,3].forEach(level=>{
+  quizBank.free[level] = quizFree[level].slice();
+  quizBank.hard[level] = cloneWithSuffix(quizFree[level],25,'HardVar');
+  quizBank.extreme[level] = cloneWithSuffix(quizFree[level],50,'ExtremeVar');
+});
+
+function getQuizBankForTier(){
+  const tier = currentUser && currentUser.tier ? currentUser.tier : 'free';
+  if(tier === 'hard') return quizBank.hard;
+  if(tier === 'extreme') return quizBank.extreme;
+  return quizBank.free;
+}
+
+/* QUIZ UI & STATE */
+let currentQuizLevel = 1;
+let currentQuestionIndex = 0;
+let userAnswers = []; // indexes or null
+
+function initQuizForUser(){
+  const bank = getQuizBankForTier();
+  currentQuizLevel = 1;
+  currentQuestionIndex = 0;
+  userAnswers = new Array(bank[currentQuizLevel].length).fill(null);
+  renderQuizMenu();
+}
+
+function renderQuizMenu(){
+  quizAreaEl.innerHTML = `
+    <div class="card">
+      <h3>Pilih Level Kuis</h3>
+      <p class="small">Jumlah soal sesuai tier: Free=10, Hard=25, Extreme=50 per level.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn" onclick="startQuiz(1)">Level 1</button>
+        <button class="btn" onclick="startQuiz(2)">Level 2</button>
+        <button class="btn" onclick="startQuiz(3)">Level 3</button>
+      </div>
+    </div>`;
+}
+
+function startQuiz(level){
+  const bank = getQuizBankForTier();
+  currentQuizLevel = level;
+  currentQuestionIndex = 0;
+  userAnswers = new Array(bank[level].length).fill(null);
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const bank = getQuizBankForTier();
+  const data = bank[currentQuizLevel];
+  if(!data){ quizAreaEl.innerHTML = '<em>Tidak ada soal.</em>'; return; }
+  const total = data.length;
+  const q = data[currentQuestionIndex];
+  const sel = userAnswers[currentQuestionIndex];
+
+  quizAreaEl.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Level ${currentQuizLevel}</strong></div>
+        <div class="small">Soal ${currentQuestionIndex+1} / ${total}</div>
+      </div>
+      <div class="question">${escapeHtml(q.q)}</div>
+      <div class="options" id="quizOptions">
+        ${q.a.map((opt,i)=>`<div class="option ${sel===i?'selected':''}" data-idx="${i}">${escapeHtml(opt)}</div>`).join('')}
+      </div>
+      <div class="nav-row">
+        <button class="btn secondary" id="prevBtn" ${currentQuestionIndex===0?'disabled':''}>Sebelumnya</button>
+        ${currentQuestionIndex < total-1 ? `<button class="btn" id="nextBtn">Selanjutnya</button>` : `<button class="btn" id="finishBtn">Selesai</button>`}
+      </div>
+    </div>
+  `;
+
+  // option click
+  document.querySelectorAll('#quizOptions .option').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const idx = parseInt(el.dataset.idx,10);
+      userAnswers[currentQuestionIndex] = idx;
+      renderQuestion(); // re-render to show selection
+    });
+  });
+  // nav
+  const prev = $('#prevBtn'), next = $('#nextBtn'), finish = $('#finishBtn');
+  if(prev) prev.addEventListener('click', ()=> { if(currentQuestionIndex>0){ currentQuestionIndex--; renderQuestion(); } });
+  if(next) next.addEventListener('click', ()=> { if(currentQuestionIndex < data.length-1){ currentQuestionIndex++; renderQuestion(); } });
+  if(finish) finish.addEventListener('click', finishQuiz);
+}
+
+/* finishQuiz: score computed from userAnswers array only once per finish.
+   We save the result in currentUser.lastQuiz to avoid duplicate saving issues.
+*/
+function finishQuiz(){
+  const bank = getQuizBankForTier();
+  const data = bank[currentQuizLevel];
+  let correct = 0;
+  for(let i=0;i<data.length;i++){
+    if(userAnswers[i] === data[i].c) correct++;
+  }
+  const total = data.length;
+  const percent = Math.round((correct/total)*100);
+  const kategori = percent <= 60 ? 'Pemula' : percent <= 85 ? 'Menengah' : 'Ahli';
+
+  // save to user (only stored once per finish)
+  if(currentUser){
+    currentUser.lastQuiz = currentUser.lastQuiz || {};
+    currentUser.lastQuiz['level'+currentQuizLevel] = { correct, total, percent, kategori, date: new Date().toISOString() };
+    currentUser.lastQuizSummary = `L${currentQuizLevel}: ${percent}%`;
+    // update saved user if persisted
+    if(localStorage.getItem(STORAGE_KEY)) saveUser(currentUser);
+    renderProfile();
+  }
+
+  quizAreaEl.innerHTML = `
+    <div class="card" style="text-align:center">
+      <h2>Hasil Kuis Level ${currentQuizLevel}</h2>
+      <p>Benar: <strong>${correct}</strong> / ${total}</p>
+      <p>Nilai: <strong>${percent}%</strong></p>
+      <p>${kategori}</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
+        <button class="btn" id="retryBtn">Ulangi</button>
+        <button class="btn secondary" id="backMenuBtn">Kembali ke Menu</button>
+      </div>
+    </div>
+  `;
+  $('#retryBtn').addEventListener('click', ()=> {
+    userAnswers = new Array(data.length).fill(null);
+    currentQuestionIndex = 0;
+    renderQuestion();
+  });
+  $('#backMenuBtn').addEventListener('click', ()=> initQuizForUser());
+}
+
+/* ============================
+   LOGIN / PROFILE / UPGRADE PANEL
+   ============================ */
+
+/* Render profile (chip) */
+function renderProfile(){
+  profileArea.innerHTML = '';
+  if(!currentUser){
+    const btn = document.createElement('button'); btn.className='profile-chip'; btn.textContent='Masuk / Daftar';
+    btn.addEventListener('click', ()=> { showLoginScreen(); });
+    profileArea.appendChild(btn);
+    return;
+  }
+
+  // check expire
+  if(currentUser.expireDate){
+    const exp = new Date(currentUser.expireDate);
+    if(new Date() > exp){
+      // expired: downgrade to free
+      currentUser.tier = 'free';
+      currentUser.startDate = null;
+      currentUser.expireDate = null;
+      if(localStorage.getItem(STORAGE_KEY)) saveUser(currentUser);
+      alert('Status premium Anda sudah kedaluwarsa. Kembali ke Gratis.');
+    }
+  }
+
+  const chip = document.createElement('div'); chip.className='profile-chip';
+  const tierLabel = currentUser.tier === 'hard' ? '💎 Premium Hard' : currentUser.tier === 'extreme' ? '🔥 Premium Extreme' : '🟢 Gratis';
+  chip.innerHTML = `${escapeHtml(currentUser.name)} • ${escapeHtml(currentUser.class||'')} <span style="margin-left:8px;font-weight:700;color:var(--muted)">${tierLabel}</span>`;
+  chip.addEventListener('click', ()=> {
+    // open account modal
+    openModal();
+  });
+  profileArea.appendChild(chip);
+}
+
+/* Show login screen (fullscreen) */
+function showLoginScreen(){
+  // prefill if saved
+  const saved = loadUser();
+  if(saved){
+    $('#nameInput').value = saved.name || '';
+    $('#classInput').value = saved.class || '';
+    $('#saveAccount').checked = true;
+  } else {
+    $('#nameInput').value = '';
+    $('#classInput').value = '';
+    $('#saveAccount').checked = false;
+  }
+  loginScreen.style.display = 'flex';
+  loginScreen.setAttribute('aria-hidden','false');
+}
+
+/* Hide login screen */
+function hideLoginScreen(){
+  loginScreen.style.display = 'none';
+  loginScreen.setAttribute('aria-hidden','true');
+}
+
+/* login handlers */
+btnLogin.addEventListener('click', ()=> {
+  const name = nameInput.value.trim();
+  const cls = classInput.value.trim();
+  const sv = saveAccountChk.checked;
+  if(!name || !cls) return alert('Isi nama & kelas terlebih dahulu.');
+  currentUser = { name, class: cls, tier:'free', startDate:null, expireDate:null, lastQuiz:{}, lastQuizSummary:null };
+  if(sv) saveUser(currentUser);
+  hideLoginScreen();
+  renderProfile();
+  renderMaterialsListForLevel(1);
+  initQuizForUser();
+});
+
+btnGuest.addEventListener('click', ()=> {
+  currentUser = { name:'Tamu', class:'', tier:'free', startDate:null, expireDate:null, lastQuiz:{}, lastQuizSummary:null };
+  hideLoginScreen();
+  renderProfile();
+  renderMaterialsListForLevel(1);
+  initQuizForUser();
+});
+
+btnLoadSaved.addEventListener('click', ()=> {
+  const s = loadUser();
+  if(!s) return alert('Tidak ada akun tersimpan di perangkat ini.');
+  currentUser = s;
+  hideLoginScreen();
+  renderProfile();
+  renderMaterialsListForLevel(1);
+  initQuizForUser();
+});
+
+/* modal open/close */
+function openModal(){ modalBackdrop.style.display='flex'; modalBackdrop.setAttribute('aria-hidden','false'); }
+function closeModalFn(){ modalBackdrop.style.display='none'; modalBackdrop.setAttribute('aria-hidden','true'); }
+closeModal.addEventListener('click', closeModalFn);
+
+/* purchase simulation */
+buyHardBtn.addEventListener('click', ()=> doPurchase('hard', 20000));
+buyExtremeBtn.addEventListener('click', ()=> doPurchase('extreme', 45000));
+
+function doPurchase(tier, price){
+  if(!currentUser) return alert('Silakan masuk terlebih dahulu.');
+  if(!confirm(`Beli ${tier==='hard'?'Premium Hard':'Premium Extreme'} — Rp ${price.toLocaleString()} / 30 hari (simulasi)?`)) return;
+  const now = new Date();
+  const exp = new Date(now.getTime() + 30*24*60*60*1000);
+  currentUser.tier = tier;
+  currentUser.startDate = now.toISOString();
+  currentUser.expireDate = exp.toISOString();
+  if(localStorage.getItem(STORAGE_KEY)) saveUser(currentUser);
+  alert('Pembelian sukses (simulasi). Paket aktif sampai ' + exp.toLocaleDateString());
+  closeModalFn();
+  renderProfile();
+  renderMaterialsListForLevel(getCurrentMaterialLevel());
+  initQuizForUser();
+}
+
+/* helper: current selected material level */
+function getCurrentMaterialLevel(){
+  const b = document.querySelector('#materialLevelSelector .level-btn.current');
+  return b ? parseInt(b.dataset.level,10) : 1;
+}
+
+/* escape util */
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+
+/* ============================
+   INIT: auto-login if stored, else show login screen
+   ============================ */
+(function initApp(){
+  const saved = loadUser();
+  if(saved){
+    currentUser = saved;
+    // check expire
+    if(currentUser.expireDate){
+      const exp = new Date(currentUser.expireDate);
+      if(new Date() > exp){
+        currentUser.tier='free';
+        currentUser.startDate = null;
+        currentUser.expireDate = null;
+        saveUser(currentUser);
+      }
+    }
+    hideLoginScreen();
+    renderProfile();
+    renderMaterialsListForLevel(1);
+    initQuizForUser();
+  } else {
+    // show login full screen
+    showLoginScreen();
+  }
+})();
+
+/* Expose for debug */
+window._edu_tkj = { getUser: ()=> currentUser, saveUser: ()=> currentUser && saveUser(currentUser) };
+
+</script>
+</body>
+</html>
